@@ -17,7 +17,7 @@ import java.util.Map;
  */
 @Service
 public class DeviceService {
-    
+
     @Autowired
     private DeviceMapper deviceMapper;
 
@@ -30,10 +30,10 @@ public class DeviceService {
     public Page<Device> getDeviceList(int page, int size, String keyword, Long plotId, String status) {
         Page<Device> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<Device> wrapper = new LambdaQueryWrapper<>();
-        
+
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.and(w -> w.like(Device::getDeviceCode, keyword)
-                .or().like(Device::getDeviceName, keyword));
+                    .or().like(Device::getDeviceName, keyword));
         }
         if (plotId != null) {
             wrapper.eq(Device::getPlotId, plotId);
@@ -41,13 +41,13 @@ public class DeviceService {
         if (status != null && !status.isEmpty()) {
             wrapper.eq(Device::getStatus, status);
         }
-        
+
         wrapper.orderByDesc(Device::getCreateTime);
         Page<Device> devicePage = deviceMapper.selectPage(pageParam, wrapper);
-        
+
         // 填充地块名称
         fillPlotNames(devicePage.getRecords());
-        
+
         return devicePage;
     }
 
@@ -67,15 +67,25 @@ public class DeviceService {
      */
     @Transactional(rollbackFor = Exception.class)
     public boolean bindDevice(Device device) {
-        // 检查设备编码是否已存在
-        Device existDevice = deviceMapper.selectOne(
-            new LambdaQueryWrapper<Device>()
-                .eq(Device::getDeviceCode, device.getDeviceCode())
-        );
+        // 检查设备编码是否已存在（包括已删除的记录）
+        Device existDevice = deviceMapper.selectByDeviceCodeIncludeDeleted(device.getDeviceCode());
+
         if (existDevice != null) {
+            // 如果是已删除的设备，先恢复（使用原生SQL更新，绕过逻辑删除限制）
+            if (existDevice.getDeleted() != null && existDevice.getDeleted() == 1) {
+                int result = deviceMapper.restoreDevice(
+                        existDevice.getId(),
+                        device.getPlotId(),
+                        device.getDeviceName(),
+                        device.getDeviceType(),
+                        "OFFLINE");
+                return result > 0;
+            }
+            // 设备已存在且未删除
             return false;
         }
-        
+
+        // 设备不存在，插入新记录
         return deviceMapper.insert(device) > 0;
     }
 
@@ -100,21 +110,19 @@ public class DeviceService {
      */
     public Map<String, Object> getDeviceStats() {
         Map<String, Object> result = new HashMap<>();
-        
+
         Long total = deviceMapper.selectCount(null);
         Long online = deviceMapper.selectCount(
-            new LambdaQueryWrapper<Device>()
-                .eq(Device::getStatus, "ONLINE")
-        );
+                new LambdaQueryWrapper<Device>()
+                        .eq(Device::getStatus, "ONLINE"));
         Long offline = deviceMapper.selectCount(
-            new LambdaQueryWrapper<Device>()
-                .eq(Device::getStatus, "OFFLINE")
-        );
-        
+                new LambdaQueryWrapper<Device>()
+                        .eq(Device::getStatus, "OFFLINE"));
+
         result.put("total", total);
         result.put("online", online);
         result.put("offline", offline);
-        
+
         return result;
     }
 
