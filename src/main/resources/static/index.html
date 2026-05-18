@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket 测试页面</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Microsoft YaHei', Arial, sans-serif;
+      background-color: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #4CAF50;
+    }
+
+    .status {
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+    }
+
+    .status.connected {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status.disconnected {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .section {
+      margin-bottom: 25px;
+    }
+
+    .section h2 {
+      color: #555;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    button.warning {
+      background-color: #ff9800;
+    }
+
+    button.warning:hover {
+      background-color: #f57c00;
+    }
+
+    .logs {
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .log-entry {
+      padding: 5px 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .log-time {
+      color: #6a9955;
+    }
+
+    .log-type {
+      color: #569cd6;
+    }
+
+    .log-alert {
+      color: #f14c4c;
+    }
+
+    .log-success {
+      color: #4CAF50;
+    }
+
+    .input-group {
+      margin-bottom: 10px;
+    }
+
+    input {
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-right: 10px;
+      width: 200px;
+    }
+
+    .info {
+      background-color: #e7f3fe;
+      border-left: 4px solid #2196F3;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+    }
+
+    .subscribe-list {
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🌱 智慧农业 WebSocket 测试</h1>
+
+    <div class="info">
+      <strong>重要提示：</strong>
+      <ul>
+        <li>连接端点是：<code>/ws</code>（不是 /ws/alert）</li>
+        <li>订阅全部告警：<code>/topic/alerts</code></li>
+        <li>订阅指定地块告警：<code>/topic/alerts/plot/{plotId}</code></li>
+        <li>订阅地块实时数据：<code>/topic/realtime/{plotId}</code></li>
+      </ul>
+    </div>
+
+    <div id="connectionStatus" class="status disconnected">
+      <strong>状态：</strong> 未连接
+    </div>
+
+    <div class="section">
+      <h2>1. 连接管理</h2>
+      <button id="connectBtn" onclick="connect()">连接 WebSocket</button>
+      <button id="disconnectBtn" onclick="disconnect()" disabled>断开连接</button>
+    </div>
+
+    <div class="section">
+      <h2>2. 告警订阅</h2>
+      <div class="input-group">
+        <button onclick="subscribeAllAlerts()">订阅全部告警 (/topic/alerts)</button>
+        <button onclick="unsubscribeAllAlerts()">取消订阅全部告警</button>
+      </div>
+      <div class="input-group">
+        <input type="number" id="alertPlotIdInput" placeholder="地块ID (如 1, 2, 3)" value="1">
+        <button onclick="subscribePlotAlerts()">订阅指定地块告警 (/topic/alerts/plot/{plotId})</button>
+        <button class="warning" onclick="unsubscribePlotAlerts()">取消订阅地块告警</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>3. 地块实时数据订阅</h2>
+      <div class="input-group">
+        <input type="number" id="plotIdInput" placeholder="地块ID (如 1, 2, 3)" value="1">
+        <button onclick="subscribePlot()">订阅地块数据 (/topic/realtime/{plotId})</button>
+        <button class="warning" onclick="unsubscribePlot()">取消订阅地块数据</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>4. 当前订阅列表</h2>
+      <div id="subscribeList" class="subscribe-list">
+        暂无订阅
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>5. 消息日志</h2>
+      <div id="logs" class="logs">
+        <div class="log-entry">等待连接...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let stompClient = null;
+    let subscriptions = {};
+
+    function addLog(type, message) {
+      const logsDiv = document.getElementById('logs');
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+
+      let typeClass = 'log-type';
+      if (type === 'ALERT') typeClass = 'log-alert';
+      if (type === 'SUCCESS') typeClass = 'log-success';
+
+      entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${typeClass}">[${type}]</span> ${message}`;
+      logsDiv.insertBefore(entry, logsDiv.firstChild);
+    }
+
+    function updateSubscribeList() {
+      const listDiv = document.getElementById('subscribeList');
+      const keys = Object.keys(subscriptions);
+
+      if (keys.length === 0) {
+        listDiv.innerHTML = '暂无订阅';
+        return;
+      }
+
+      let html = '<strong>当前订阅：</strong><br>';
+      keys.forEach(key => {
+        html += `• ${subscriptions[key].topic}<br>`;
+      });
+      listDiv.innerHTML = html;
+    }
+
+    function updateStatus(connected) {
+      const statusDiv = document.getElementById('connectionStatus');
+      if (connected) {
+        statusDiv.className = 'status connected';
+        statusDiv.innerHTML = '<strong>状态：</strong> ✅ 已连接';
+        document.getElementById('connectBtn').disabled = true;
+        document.getElementById('disconnectBtn').disabled = false;
+      } else {
+        statusDiv.className = 'status disconnected';
+        statusDiv.innerHTML = '<strong>状态：</strong> ❌ 已断开';
+        document.getElementById('connectBtn').disabled = false;
+        document.getElementById('disconnectBtn').disabled = true;
+      }
+    }
+
+    function connect() {
+      addLog('INFO', '正在连接 WebSocket...');
+      addLog('INFO', '使用 URL: /ws');
+
+      // 创建SockJS连接，配置withCredentials
+      const socket = new SockJS('/ws', null, {
+        transport: 'websocket',
+        withCredentials: true
+      });
+      stompClient = Stomp.over(socket);
+
+      // 开启调试日志
+      stompClient.debug = function (str) {
+        addLog('DEBUG', str);
+      };
+
+      socket.onopen = function () {
+        addLog('INFO', 'SockJS 连接已打开');
+      };
+
+      socket.onclose = function () {
+        addLog('WARN', 'SockJS 连接已关闭');
+      };
+
+      socket.onerror = function (error) {
+        addLog('ERROR', 'SockJS 错误: ' + JSON.stringify(error));
+      };
+
+      // 连接时不发送额外header
+      stompClient.connect({}, function (frame) {
+        addLog('SUCCESS', '连接成功！Frame: ' + frame);
+        updateStatus(true);
+      }, function (error) {
+        addLog('ERROR', '连接失败！' + JSON.stringify(error));
+        updateStatus(false);
+      });
+    }
+
+    function disconnect() {
+      if (stompClient !== null) {
+        // 取消所有订阅
+        Object.values(subscriptions).forEach(sub => {
+          if (sub) {
+            sub.unsubscribe();
+          }
+        });
+        subscriptions = {};
+        updateSubscribeList();
+
+        stompClient.disconnect();
+        addLog('INFO', '已断开连接');
+        updateStatus(false);
+      }
+    }
+
+    function subscribeAllAlerts() {
+      if (!stompClient || !stompClient.connected) {
+        addLog('WARN', '请先连接 WebSocket！');
+        return;
+      }
+
+      const topic = '/topic/alerts';
+      if (subscriptions['alerts-all']) {
+        addLog('WARN', '已订阅全部告警通知！');
+        return;
+      }
+
+      subscriptions['alerts-all'] = stompClient.subscribe(topic, function (message) {
+        const data = JSON.parse(message.body);
+        addLog('ALERT', `[全部告警] ${data.type}: ${JSON.stringify(data.data)}`);
+      });
+      subscriptions['alerts-all'].topic = topic;
+
+      addLog('SUCCESS', '成功订阅全部告警通知：' + topic);
+      updateSubscribeList();
+    }
+
+    function unsubscribeAllAlerts() {
+      if (!subscriptions['alerts-all']) {
+        addLog('WARN', '未订阅全部告警通知！');
+        return;
+      }
+
+      subscriptions['alerts-all'].unsubscribe();
+      delete subscriptions['alerts-all'];
+      addLog('INFO', '已取消订阅全部告警通知');
+      updateSubscribeList();
+    }
+
+    function subscribePlotAlerts() {
+      if (!stompClient || !stompClient.connected) {
+        addLog('WARN', '请先连接 WebSocket！');
+        return;
+      }
+
+      const plotId = document.getElementById('alertPlotIdInput').value;
+      if (!plotId) {
+        addLog('WARN', '请输入地块ID！');
+        return;
+      }
+
+      const topic = '/topic/alerts/plot/' + plotId;
+      const key = 'alerts-plot-' + plotId;
+
+      if (subscriptions[key]) {
+        addLog('WARN', '已订阅地块' + plotId + '的告警！');
+        return;
+      }
+
+      subscriptions[key] = stompClient.subscribe(topic, function (message) {
+        const data = JSON.parse(message.body);
+        addLog('ALERT', `[地块${plotId}告警] ${data.type}: ${JSON.stringify(data.data)}`);
+      });
+      subscriptions[key].topic = topic;
+
+      addLog('SUCCESS', '成功订阅地块' + plotId + '的告警：' + topic);
+      updateSubscribeList();
+    }
+
+    function unsubscribePlotAlerts() {
+      const plotId = document.getElementById('alertPlotIdInput').value;
+      if (!plotId) {
+        addLog('WARN', '请输入地块ID！');
+        return;
+      }
+
+      const key = 'alerts-plot-' + plotId;
+      if (!subscriptions[key]) {
+        addLog('WARN', '未订阅地块' + plotId + '的告警！');
+        return;
+      }
+
+      subscriptions[key].unsubscribe();
+      delete subscriptions[key];
+      addLog('INFO', '已取消订阅地块' + plotId + '的告警');
+      updateSubscribeList();
+    }
+
+    function subscribePlot() {
+      if (!stompClient || !stompClient.connected) {
+        addLog('WARN', '请先连接 WebSocket！');
+        return;
+      }
+
+      const plotId = document.getElementById('plotIdInput').value;
+      if (!plotId) {
+        addLog('WARN', '请输入地块ID！');
+        return;
+      }
+
+      const topic = '/topic/realtime/' + plotId;
+      const key = 'plot-' + plotId;
+
+      if (subscriptions[key]) {
+        addLog('WARN', '已订阅地块' + plotId + '的数据！');
+        return;
+      }
+
+      subscriptions[key] = stompClient.subscribe(topic, function (message) {
+        const data = JSON.parse(message.body);
+        addLog('DATA', `[地块${plotId}] ${data.type}: ${JSON.stringify(data.data)}`);
+      });
+      subscriptions[key].topic = topic;
+
+      addLog('SUCCESS', '成功订阅地块' + plotId + '的数据：' + topic);
+      updateSubscribeList();
+    }
+
+    function unsubscribePlot() {
+      const plotId = document.getElementById('plotIdInput').value;
+      if (!plotId) {
+        addLog('WARN', '请输入地块ID！');
+        return;
+      }
+
+      const key = 'plot-' + plotId;
+      if (!subscriptions[key]) {
+        addLog('WARN', '未订阅地块' + plotId + '的数据！');
+        return;
+      }
+
+      subscriptions[key].unsubscribe();
+      delete subscriptions[key];
+      addLog('INFO', '已取消订阅地块' + plotId + '的数据');
+      updateSubscribeList();
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 父项目：Spring Boot 2.7.18 -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.18</version>
+        <relativePath/>
+    </parent>
+
+    <!-- 项目基本信息 -->
+    <groupId>com.agriculture</groupId>
+    <artifactId>intelligent-agriculture</artifactId>
+    <version>1.0.0</version>
+    <name>intelligent-agriculture</name>
+    <description>智慧农业后端系统 - 基于Spring Boot 2.7</description>
+
+    <properties>
+        <!-- JDK版本 -->
+        <java.version>11</java.version>
+        <!-- 项目编码 -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- MyBatis-Plus版本 -->
+        <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <!-- 其他依赖版本 -->
+    </properties>
+
+    <dependencies>
+        <!-- ========================================= -->
+        <!-- Spring Boot 核心模块 -->
+        <!-- ========================================= -->
+        <!-- Web模块：提供REST API和Tomcat容器 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- WebSocket模块：提供WebSocket支持 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <!-- Validation模块：提供参数校验 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ========================================= -->
+        <!-- 数据库和持久化 -->
+        <!-- ========================================= -->
+        <!-- MyBatis-Plus：增强版MyBatis -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
+
+        <!-- MySQL驱动 -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.32</version>
+        </dependency>
+
+        <!-- ========================================= -->
+        <!-- MQTT集成 -->
+        <!-- ========================================= -->
+        <!-- Eclipse Paho MQTT客户端 -->
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>1.2.5</version>
+        </dependency>
+
+        <!-- ========================================= -->
+        <!-- 工具类 -->
+        <!-- ========================================= -->
+        <!-- Lombok：简化代码（可选，用户说不使用，但我先保留，如不需要可以去掉） -->
+        <!-- 注意：根据用户要求不使用Lombok，所以注释掉 -->
+        <!--
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        -->
+
+        <!-- Hutool：Java工具包，提供各种常用工具 -->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.8.20</version>
+        </dependency>
+
+        <!-- Jackson：JSON处理 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- ========================================= -->
+        <!-- 测试依赖 -->
+        <!-- ========================================= -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Spring Boot Maven插件 -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <!-- 如果使用Lombok，需要配置 -->
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

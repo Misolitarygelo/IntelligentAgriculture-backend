@@ -1,0 +1,75 @@
+server:
+  port: 8080  # 服务端口
+  servlet:
+    context-path: /  # 上下文路径
+
+spring:
+  application:
+    name: intelligent-agriculture  # 应用名称
+
+  # ===============================================
+  # 数据源配置（MySQL）
+  # ===============================================
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://47.108.58.107:3306/dream6?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: root
+    password: c0765083cd3f57ab
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      pool-name: AgricultureHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+    # 数据库初始化脚本（Spring Boot 2.5+）
+    sql:
+      init:
+        schema-locations: classpath:db/init.sql
+        mode: always
+
+  # ===============================================
+  # MyBatis-Plus配置
+  # ===============================================
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml  # Mapper XML路径
+  type-aliases-package: com.agriculture.demo.entity  # 实体类包路径
+  configuration:
+    map-underscore-to-camel-case: true  # 下划线转驼峰
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # SQL日志输出
+  global-config:
+    db-config:
+      id-type: auto  # 主键自增
+      logic-delete-field: deleted  # 逻辑删除字段
+      logic-delete-value: 1  # 逻辑删除值
+      logic-not-delete-value: 0  # 逻辑未删除值
+
+  # ===============================================
+  # 自定义配置
+  # ===============================================
+agriculture:
+  # MQTT配置
+  mqtt:
+    broker-address: tcp://47.108.58.107:1883  # Broker地址
+    client-id: agriculture-server  # 客户端ID
+    username:  # 用户名（可选）
+    password:  # 密码（可选）
+    topic:
+      environment-data: team6/environment_data  # 环境数据上报主题
+      heart-beat: team6/heart_beat  # 心跳上报主题
+      irrigation: team6/irrigation  # 灌溉控制主题
+    timeout: 10  # 超时时间（秒）
+    keepalive: 60  # 心跳间隔（秒）
+  
+  # 设备离线超时时间（分钟）
+  device:
+    offline-timeout: 5
+  
+  # ===============================================
+  # 日志配置
+  # ===============================================
+logging:
+  level:
+    root: INFO
+    com.agriculture.demo: DEBUG
+    org.springframework: INFO
