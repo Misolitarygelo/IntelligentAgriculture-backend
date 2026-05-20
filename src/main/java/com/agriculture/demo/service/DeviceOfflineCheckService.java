@@ -2,6 +2,7 @@ package com.agriculture.demo.service;
 
 import com.agriculture.demo.entity.Device;
 import com.agriculture.demo.mapper.DeviceMapper;
+import com.agriculture.demo.util.SystemAlertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import java.util.List;
 public class DeviceOfflineCheckService {
 
     private static final Logger logger = LoggerFactory.getLogger(DeviceOfflineCheckService.class);
+    private static final String SOURCE = "DeviceOfflineCheckService";
 
     @Autowired
     private DeviceMapper deviceMapper;
@@ -89,6 +91,10 @@ public class DeviceOfflineCheckService {
             }
         } catch (Exception e) {
             logger.error("检查设备离线状态失败: {}", e.getMessage(), e);
+            // 记录定时任务执行异常告警
+            SystemAlertUtil.logScheduleError("设备离线检测任务失败",
+                    String.format("错误: %s", e.getMessage()),
+                    SOURCE);
         }
     }
 }

@@ -3,6 +3,7 @@ package com.agriculture.demo.service;
 import com.agriculture.demo.entity.*;
 import com.agriculture.demo.enums.*;
 import com.agriculture.demo.mapper.*;
+import com.agriculture.demo.util.SystemAlertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +26,7 @@ import java.util.Map;
 public class MqttDataService {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttDataService.class);
+    private static final String SOURCE = "MqttDataService";
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -68,7 +70,29 @@ public class MqttDataService {
             }
         } catch (Exception e) {
             logger.error("处理MQTT消息失败: {}", e.getMessage(), e);
+            // 判断是否为数据库异常
+            if (isDatabaseException(e)) {
+                SystemAlertUtil.logDatabaseError("MQTT数据处理失败",
+                        String.format("主题: %s, 错误: %s", topic, e.getMessage()),
+                        SOURCE);
+            } else {
+                SystemAlertUtil.logSystemError("MQTT数据处理失败",
+                        String.format("主题: %s, 错误: %s", topic, e.getMessage()),
+                        SOURCE);
+            }
         }
+    }
+
+    /**
+     * 判断是否为数据库异常
+     */
+    private boolean isDatabaseException(Exception e) {
+        String exceptionName = e.getClass().getName();
+        return exceptionName.contains("SQLException")
+                || exceptionName.contains("Database")
+                || exceptionName.contains("MyBatis")
+                || exceptionName.contains("SQL")
+                || (e.getCause() != null && isDatabaseException((Exception) e.getCause()));
     }
 
     /**

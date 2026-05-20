@@ -51,6 +51,12 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- AOP模块：提供切面编程支持 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
         <!-- ========================================= -->
         <!-- 数据库和持久化 -->
         <!-- ========================================= -->
@@ -81,15 +87,12 @@
         <!-- ========================================= -->
         <!-- 工具类 -->
         <!-- ========================================= -->
-        <!-- Lombok：简化代码（可选，用户说不使用，但我先保留，如不需要可以去掉） -->
-        <!-- 注意：根据用户要求不使用Lombok，所以注释掉 -->
-        <!--
+        <!-- Lombok：简化代码，提供@Data等注解 -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-        -->
 
         <!-- Hutool：Java工具包，提供各种常用工具 -->
         <dependency>

@@ -144,6 +144,27 @@ CREATE TABLE `irrigation_log` (
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
+-- 8. 系统告警日志表（system_alert_log）
+-- ============================================================
+DROP TABLE IF EXISTS `system_alert_log`;
+CREATE TABLE `system_alert_log` (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    alert_type VARCHAR(50) NOT NULL COMMENT '告警类型',
+    alert_level VARCHAR(20) NOT NULL COMMENT '告警级别(INFO/WARN/ERROR)',
+    message VARCHAR(500) NOT NULL COMMENT '告警消息内容',
+    detail TEXT COMMENT '详细信息(JSON格式)',
+    source VARCHAR(200) COMMENT '告警来源(模块/类名)',
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '处理状态(PENDING/PROCESSING/DONE/IGNORED)',
+    handle_time DATETIME COMMENT '处理时间',
+    create_time DATETIME NOT NULL COMMENT '创建时间',
+    update_time DATETIME NOT NULL COMMENT '更新时间',
+    INDEX idx_alert_type (alert_type),
+    INDEX idx_alert_level (alert_level),
+    INDEX idx_status (status),
+    INDEX idx_create_time (create_time)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统告警日志表';
+
+-- ============================================================
 -- 初始化数据
 -- ============================================================
 

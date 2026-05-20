@@ -1,5 +1,6 @@
 package com.agriculture.demo.mqtt;
 
+import com.agriculture.demo.util.SystemAlertUtil;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class MqttSubscriber implements CommandLineRunner {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(MqttSubscriber.class);
 
     @Autowired
@@ -36,19 +37,19 @@ public class MqttSubscriber implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         logger.info("开始订阅MQTT主题...");
-        
+
         // 设置回调处理器
         mqttClient.setCallback(mqttMessageHandler);
-        
+
         // 订阅环境数据主题
         subscribeTopic(envDataTopic);
-        
+
         // 订阅心跳主题
         subscribeTopic(heartBeatTopic);
-        
+
         // 订阅灌溉控制响应主题
         subscribeTopic(irrigationTopic);
-        
+
         logger.info("MQTT主题订阅完成！");
     }
 
@@ -61,6 +62,10 @@ public class MqttSubscriber implements CommandLineRunner {
             logger.info("订阅主题成功: {}", topic);
         } catch (MqttException e) {
             logger.error("订阅主题失败: {}", topic, e);
+            // 记录MQTT告警
+            SystemAlertUtil.logMqttError("MQTT订阅失败",
+                    String.format("主题: %s, 错误: %s", topic, e.getMessage()),
+                    "MqttSubscriber");
         }
     }
 }

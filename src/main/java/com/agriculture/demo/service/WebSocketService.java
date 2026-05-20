@@ -2,6 +2,7 @@ package com.agriculture.demo.service;
 
 import com.agriculture.demo.entity.*;
 import com.agriculture.demo.enums.*;
+import com.agriculture.demo.util.SystemAlertUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ import java.util.Map;
 public class WebSocketService {
 
     private static final Logger logger = LoggerFactory.getLogger(WebSocketService.class);
+    private static final String SOURCE = "WebSocketService";
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
@@ -47,6 +49,9 @@ public class WebSocketService {
             logger.debug("推送传感器数据成功 - 地块: {}", plotId);
         } catch (Exception e) {
             logger.error("推送传感器数据失败: {}", e.getMessage(), e);
+            SystemAlertUtil.logWebSocketError("推送传感器数据失败",
+                    String.format("地块ID: %s, 错误: %s", plotId, e.getMessage()),
+                    SOURCE);
         }
     }
 
@@ -74,6 +79,9 @@ public class WebSocketService {
             logger.info("推送设备状态成功 - 设备: {}, 状态: {}", device.getDeviceCode(), device.getStatus());
         } catch (Exception e) {
             logger.error("推送设备状态失败: {}", e.getMessage(), e);
+            SystemAlertUtil.logWebSocketError("推送设备状态失败",
+                    String.format("设备: %s, 错误: %s", device != null ? device.getDeviceCode() : "null", e.getMessage()),
+                    SOURCE);
         }
     }
 
@@ -102,6 +110,9 @@ public class WebSocketService {
             logger.info("推送灌溉状态成功 - 地块: {}, 状态: {}", plot.getPlotName(), plot.getCurrentIrrigationStatus());
         } catch (Exception e) {
             logger.error("推送灌溉状态失败: {}", e.getMessage(), e);
+            SystemAlertUtil.logWebSocketError("推送灌溉状态失败",
+                    String.format("地块: %s, 错误: %s", plot != null ? plot.getPlotName() : "null", e.getMessage()),
+                    SOURCE);
         }
     }
 
@@ -129,6 +140,9 @@ public class WebSocketService {
             logger.info("推送灌溉模式成功 - 地块: {}, 模式: {}", plot.getPlotName(), plot.getIrrigationMode());
         } catch (Exception e) {
             logger.error("推送灌溉模式失败: {}", e.getMessage(), e);
+            SystemAlertUtil.logWebSocketError("推送灌溉模式失败",
+                    String.format("地块: %s, 错误: %s", plot != null ? plot.getPlotName() : "null", e.getMessage()),
+                    SOURCE);
         }
     }
 
@@ -148,6 +162,9 @@ public class WebSocketService {
             logger.info("推送自动灌溉触发消息成功 - 地块: {}", plotId);
         } catch (Exception e) {
             logger.error("推送自动灌溉触发消息失败: {}", e.getMessage(), e);
+            SystemAlertUtil.logWebSocketError("推送自动灌溉触发消息失败",
+                    String.format("地块ID: %s, 错误: %s", plotId, e.getMessage()),
+                    SOURCE);
         }
     }
 
@@ -193,6 +210,9 @@ public class WebSocketService {
             logger.info("推送告警通知成功 - 告警: {}, 地块: {}", alertLog.getAlertType(), alertLog.getPlotId());
         } catch (Exception e) {
             logger.error("推送告警通知失败: {}", e.getMessage(), e);
+            SystemAlertUtil.logWebSocketError("推送告警通知失败",
+                    String.format("告警ID: %s, 错误: %s", alertLog != null ? alertLog.getId() : "null", e.getMessage()),
+                    SOURCE);
         }
     }
 
@@ -234,6 +254,9 @@ public class WebSocketService {
             logger.info("推送告警状态更新成功 - 告警: {}, 状态: {}", alertLog.getId(), alertLog.getStatus());
         } catch (Exception e) {
             logger.error("推送告警状态更新失败: {}", e.getMessage(), e);
+            SystemAlertUtil.logWebSocketError("推送告警状态更新失败",
+                    String.format("告警ID: %s, 错误: %s", alertLog != null ? alertLog.getId() : "null", e.getMessage()),
+                    SOURCE);
         }
     }
 }

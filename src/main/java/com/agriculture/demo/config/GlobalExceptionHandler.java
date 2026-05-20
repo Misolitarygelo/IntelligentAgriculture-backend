@@ -2,6 +2,7 @@ package com.agriculture.demo.config;
 
 import com.agriculture.demo.common.BusinessException;
 import com.agriculture.demo.common.Result;
+import com.agriculture.demo.util.SystemAlertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.BindException;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String SOURCE = "GlobalExceptionHandler";
 
     /**
      * 处理业务异常
@@ -74,6 +76,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Result<?> handleException(Exception e) {
         logger.error("系统异常: ", e);
+
+        // 记录系统告警
+        SystemAlertUtil.logException(e, SOURCE);
+
         return Result.fail("系统异常，请联系管理员");
     }
 }

@@ -1,5 +1,6 @@
 package com.agriculture.demo.mqtt;
 
+import com.agriculture.demo.util.SystemAlertUtil;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -14,17 +15,19 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class MqttPublisher {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(MqttPublisher.class);
+    private static final String SOURCE = "MqttPublisher";
 
     @Autowired
     private MqttClient mqttClient;
 
     /**
      * 发送消息
-     * @param topic 主题
+     * 
+     * @param topic   主题
      * @param payload 消息内容
-     * @param qos 服务质量（0、1、2）
+     * @param qos     服务质量（0、1、2）
      */
     public void publish(String topic, String payload, int qos) {
         try {
@@ -34,6 +37,10 @@ public class MqttPublisher {
             logger.info("MQTT消息发送成功 - Topic: {}, 内容: {}", topic, payload);
         } catch (MqttException e) {
             logger.error("MQTT消息发送失败 - Topic: {}, 内容: {}", topic, payload, e);
+            // 记录MQTT发送异常告警
+            SystemAlertUtil.logMqttError("MQTT消息发送失败",
+                    String.format("主题: %s, 错误: %s", topic, e.getMessage()),
+                    SOURCE);
         }
     }
 
@@ -49,9 +56,8 @@ public class MqttPublisher {
      */
     public void publishIrrigationControl(String msgId, String irrigation, String deviceCode) {
         String payload = String.format(
-            "{\"msgId\":\"%s\",\"irrigation\":\"%s\",\"device_code\":\"%s\",\"type\":\"control\"}",
-            msgId, irrigation, deviceCode
-        );
+                "{\"msgId\":\"%s\",\"irrigation\":\"%s\",\"device_code\":\"%s\",\"type\":\"control\"}",
+                msgId, irrigation, deviceCode);
         publish("team6/irrigation", payload);
     }
 }
